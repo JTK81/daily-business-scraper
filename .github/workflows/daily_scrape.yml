@@ -2,7 +2,7 @@ name: Daily Scraper
 
 on:
   schedule:
-    - cron: '0 13 * * *'  # Runs daily at 8 AM EST
+    - cron: '0 13 * * *'  # Every day at 8 AM EST
   workflow_dispatch:
 
 jobs:
@@ -10,11 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
-        run: pip install pandas beautifulsoup4
+        run: pip install pandas beautifulsoup4 requests
+
       - name: Run scraper
         run: python daily_scraper.py
+
+      - name: Upload CSV file
+        uses: actions/upload-artifact@v4
+        with:
+          name: business-leads
+          path: business_listings_*.csv
