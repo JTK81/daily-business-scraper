@@ -15,6 +15,8 @@ def scrape_bizbuysell():
             "State": "IL",
             "Revenue": 3500000,
             "SDE": 900000,
+            "Cash Flow": 900000,
+            "FFE": 150000,
             "Asking Price": 2500000,
             "Listing Date": "2025-04-30",
             "URL": "https://www.bizbuysell.com/Business-Opportunity/acme-logistics/123456/"
@@ -25,6 +27,8 @@ def scrape_bizbuysell():
             "State": "WI",
             "Revenue": 4200000,
             "SDE": 600000,
+            "Cash Flow": 600000,
+            "FFE": 200000,
             "Asking Price": 3200000,
             "Listing Date": "2025-04-28",
             "URL": "https://www.bizquest.com/business-for-sale/midwest-tool-die/987654/"
@@ -57,3 +61,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
