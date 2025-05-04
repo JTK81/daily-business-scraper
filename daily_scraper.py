@@ -3,38 +3,81 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import datetime
-
-# Placeholder function for demo – actual scraping logic to be written per site
+import time
 
 def scrape_bizbuysell():
-    # Example listing structure (replace with real scrape)
-    data = [
-        {
-            "Business Name": "Acme Logistics",
-            "Industry": "Transportation",
-            "State": "IL",
-            "Revenue": 3500000,
-            "SDE": 900000,
-            "Cash Flow": 900000,
-            "FFE": 150000,
-            "Asking Price": 2500000,
-            "Listing Date": "2025-04-30",
-            "URL": "https://www.bizbuysell.com/Business-Opportunity/acme-logistics/123456/"
-        },
-        {
-            "Business Name": "Midwest Tool & Die",
-            "Industry": "Manufacturing",
-            "State": "WI",
-            "Revenue": 4200000,
-            "SDE": 600000,
-            "Cash Flow": 600000,
-            "FFE": 200000,
-            "Asking Price": 3200000,
-            "Listing Date": "2025-04-28",
-            "URL": "https://www.bizquest.com/business-for-sale/midwest-tool-die/987654/"
-        }
-    ]
-    return pd.DataFrame(data)
+    base_url = "https://www.bizbuysell.com/businesses-for-sale/?q=/Businesses-for-Sale/Midwest/"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(base_url, headers=headers)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    listings = []
+
+    for card in soup.select(".listing-card--details"):
+        name = card.select_one(".listing-card--title")
+        location = card.select_one(".listing-card--location")
+        price = card.select_one(".listing-card--price")
+        rev = card.select_one(".listing-card--gross")
+        cash_flow = card.select_one(".listing-card--cashflow")
+        url_tag = card.find("a", href=True)
+
+        if not name or not rev or not cash_flow or not url_tag:
+            continue
+
+        state = ""
+        if location and "," in location.text:
+            state = location.text.split(",")[-1].strip()
+
+        try:
+            revenue = int(rev.text.replace("$", "").replace(",", "").strip())
+            sde = int(cash_flow.text.replace("$", "").replace(",", "").strip())
+        except:
+            continue
+
+        listing_url = "https://www.bizbuysell.com" + url_tag["href"]
+
+        # Visit individual listing page for more details
+        time.sleep(1)  # Be polite
+        detail_resp = requests.get(listing_url, headers=headers)
+        detail_soup = BeautifulSoup(detail_resp.text, "html.parser")
+
+        industry = "Unknown"
+        ffe = None
+        listing_date = None
+
+        try:
+            details_section = detail_soup.select(".listing-summary__item")
+            for item in details_section:
+                label = item.select_one(".listing-summary__label")
+                value = item.select_one(".listing-summary__value")
+                if not label or not value:
+                    continue
+                label_text = label.text.strip()
+                value_text = value.text.strip()
+
+                if "FFE" in label_text:
+                    ffe = int(value_text.replace("$", "").replace(",", ""))
+                elif "Date" in label_text:
+                    listing_date = value_text
+                elif "Industry" in label_text:
+                    industry = value_text
+        except:
+            pass
+
+        listings.append({
+            "Business Name": name.text.strip(),
+            "Industry": industry,
+            "State": state,
+            "Revenue": revenue,
+            "SDE": sde,
+            "Cash Flow": sde,
+            "FFE": ffe,
+            "Asking Price": price.text.strip() if price else None,
+            "Listing Date": listing_date,
+            "URL": listing_url
+        })
+
+    return pd.DataFrame(listings)
 
 def filter_data(df):
     allowed_industries = ["Services", "Manufacturing", "Transportation"]
@@ -61,4 +104,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
