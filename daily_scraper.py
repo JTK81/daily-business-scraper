@@ -25,7 +25,7 @@ def scrape_bizbuysell():
     session = get_session()
     listings = []
 
-    for page in range(1, 8):  # scrape first 5 pages
+    for page in range(1, 6):  # scrape first 5 pages
         base_url = f"https://www.bizbuysell.com/businesses-for-sale/?q=/Businesses-for-Sale/Midwest/&page={page}"
         try:
             response = session.get(base_url)
@@ -128,11 +128,17 @@ def save_to_csv(df):
 
 def main():
     df_raw = scrape_bizbuysell()
+
+    if df_raw.empty:
+        print("No listings found. Skipping filtering and save.")
+        return
+
     df_filtered = filter_data(df_raw)
     save_to_csv(df_filtered)
 
 if __name__ == "__main__":
     main()
+    
 
 
 
