@@ -26,7 +26,7 @@ def scrape_bizbuysell():
     listings = []
 
     for page in range(1, 6):  # scrape first 5 pages
-        base_url = f"https://www.bizbuysell.com/businesses-for-sale/?q=/Businesses-for-Sale/Midwest/&page={page}"
+        base_url = f"https://www.bizbuysell.com/businesses-for-sale/?q=/Businesses-for-Sale/&page={page}"
         try:
             response = session.get(base_url)
             response.raise_for_status()
@@ -109,16 +109,19 @@ def scrape_bizbuysell():
     return pd.DataFrame(listings)
 
 def filter_data(df):
-    allowed_industries = ["Services", "Manufacturing", "Transportation"]
-    allowed_states = ["IL", "WI", "MI", "OH", "MN", "IN", "IA", "MO", "KS", "NE", "ND", "SD"]
+    allowed_states = ["IL", "WI", "MI", "OH", "MN", "IN", "IA", "MO", "KS", "NE", "ND", "SD", "KY", "TN", "TX"]
+    excluded_keywords = ["food", "restaurant", "franchise"]
 
-    return df[
-        (df["Industry"].isin(allowed_industries)) &
-        (df["State"].isin(allowed_states)) &
+    df_filtered = df[
+        df["State"].isin(allowed_states) &
         (df["Revenue"] >= 1_000_000) &
         (df["Revenue"] <= 5_000_000) &
         ((df["SDE"] / df["Revenue"]) >= 0.20)
     ]
+
+    df_filtered = df_filtered[~df_filtered["Industry"].str.lower().str.contains("|".join(excluded_keywords), na=False)]
+
+    return df_filtered
 
 def save_to_csv(df):
     today = datetime.now().strftime('%Y-%m-%d')
@@ -138,7 +141,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-
 
 
